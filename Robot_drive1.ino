@@ -45,10 +45,12 @@ void setup() {
   Serial.begin(115200);
 
   //definiera vilka pins som gör vad.
-  pinMode(12, OUTPUT);
+  pinMode(dirA, OUTPUT);
   pinMode(brkA, OUTPUT);
   pinMode(dirB, OUTPUT);
   pinMode(brkB, OUTPUT);
+	
+	//definiera interups 
 
   //Hjul A: framåt, broms i
   digitalWrite(dirA, LOW);
@@ -74,8 +76,20 @@ void setup() {
 
 }
 //
+void wall() {
+	//Här hamnar man efter man kört in i vägg 
+}
+void ball() {
+	//Här hamnar man när man fångat upp en boll
+}
 void loop() {
-  switch (state) {
+  
+	//kör framåt hela tiden
+	
+	//
+	
+	
+	switch (state) {
   
     case forwards:
       //Kör framåt
@@ -88,7 +102,7 @@ void loop() {
 
     case check:
       //Stanna
-      stanna();
+      stop();
       
       //skapa variabeln uS och cm
       //unsigned int uS;
@@ -112,7 +126,7 @@ void loop() {
       } if(cm == 0){
         backward();
         delay(300);
-        stanna();
+        stop();
         delay(100);
         turnLeft();
         delay(1000);
@@ -123,7 +137,7 @@ void loop() {
       state = forwards;
       break;
 
-      break;
+     
     case backwards:
       //Kör bakåt
       backward();
