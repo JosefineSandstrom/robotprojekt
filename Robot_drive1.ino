@@ -49,8 +49,6 @@ void setup() {
   pinMode(brkA, OUTPUT);
   pinMode(dirB, OUTPUT);
   pinMode(brkB, OUTPUT);
-	
-	//definiera interups 
 
   //Hjul A: framåt, broms i
   digitalWrite(dirA, LOW);
@@ -69,32 +67,20 @@ void setup() {
   delayMicroseconds(2);
   pinMode(echo, INPUT);
 
-  //Grundstatet är framåt
+  //Grundstatet är check
   state = check;
 
 
 
 }
 //
-void wall() {
-	//Här hamnar man efter man kört in i vägg 
-}
-void ball() {
-	//Här hamnar man när man fångat upp en boll
-}
 void loop() {
-  
-	//kör framåt hela tiden
-	
-	//
-	
-	
-	switch (state) {
+  switch (state) {
   
     case forwards:
       //Kör framåt
       forward();
-      //Vänta i 500ms
+      //Vänta i 1000ms
       delay(1000);
       //Kolla om det finns något
       state = check;
@@ -102,7 +88,7 @@ void loop() {
 
     case check:
       //Stanna
-      stop();
+      stanna();
       
       //skapa variabeln uS och cm
       //unsigned int uS;
@@ -126,7 +112,7 @@ void loop() {
       } if(cm == 0){
         backward();
         delay(300);
-        stop();
+        stanna();
         delay(100);
         turnLeft();
         delay(1000);
@@ -137,7 +123,7 @@ void loop() {
       state = forwards;
       break;
 
-     
+      break;
     case backwards:
       //Kör bakåt
       backward();
