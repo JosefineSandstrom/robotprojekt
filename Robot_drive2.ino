@@ -58,8 +58,12 @@ Servo servo1;
 #define echo 31
 #define maxdist 200
 
+#define trig_front 47 //<------ JS
+#define echo_front 29 //<------ JS
+
 //skicka in parametrar till sonar-objekt
 NewPing sonar(trig, echo, maxdist);
+NewPing sonar_front(trig_front, echo_front, maxdist); //<------ JS
 
 //Variabler för avståndscheck
 int duration;
@@ -158,6 +162,7 @@ void loop() {
       digitalWrite(41, LOW);
       //skapa variabeln cm som ger avståndet från väggen
       unsigned int cm;
+      unsigned int cm_front; //<------ JS
       //unsigned int uS;
       
      
@@ -169,6 +174,8 @@ void loop() {
       Serial.print(cm);
       Serial.print("\n cm");
      
+      cm_front = sonar_front.convert_cm(sonar_front.ping());  //<------ JS
+      
       //skriv ut i cm
       //Serial.print("\n Output: ");
       //Serial.print(Output);
@@ -422,3 +429,15 @@ void interrupt(){
 
 }
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  //i case check: kolla om servo rakt fram ser vägg/får ett visst värde
+  
+  case wallTurn:
+  //medan servon inte ger värde noll, sväng höger
+  while(!= 0){
+    
+  }
+  
+  
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
