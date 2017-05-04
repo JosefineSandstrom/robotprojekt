@@ -1,6 +1,5 @@
 #include <Servo.h>
 #include <NewPing.h>
-#include <PID_v1.h>
 
 
 //Pins på shielden
@@ -41,6 +40,7 @@ unsigned long tboll;
 
 //Gör egen P-regulator, detta är "målet" Den ger med nuvarande inställningar stationärt fel på +4, dvs för närvarande ca 14cm från.
 int target = 10;
+int target_front = 20; //<------- JS
 
 //skillnaden mellan motor A och B i hastighet
 double dif = 0;
@@ -78,6 +78,7 @@ const int backwards = 3;
 const int lift = 4;
 const int sink = 5;
 const int irtest = 10;
+const int frontTurn = 6;
 
 
 
@@ -184,9 +185,13 @@ void loop() {
         }
         dif = cm - target;
         turnTest(pidspeed - 3*dif, pidspeed + 3*dif);
+      
+        if(cm_front < target_front){  //<------ JS
+          state = frontTurn;
+        } 
 
         LEDcheck();
-        
+      
         break;    
 
     case backwards:
@@ -243,6 +248,13 @@ void loop() {
      break;
   }
  // Serial.print("Hallå \n");
+    
+    case frontTurn:    //<------- JS
+     //medan servon inte ger värde noll, sväng höger
+      while(!= 0){
+    
+      }
+    break;
   
 
 }
@@ -429,15 +441,4 @@ void interrupt(){
 
 }
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  //i case check: kolla om servo rakt fram ser vägg/får ett visst värde
-  
-  case wallTurn:
-  //medan servon inte ger värde noll, sväng höger
-  while(!= 0){
-    
-  }
-  
-  
-  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
