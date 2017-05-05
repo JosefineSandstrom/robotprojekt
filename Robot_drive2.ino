@@ -79,7 +79,7 @@ const int lift = 4;
 const int sink = 5;
 const int irtest = 10;
 const int frontTurn = 6;
-
+//const int ramp = 7;
 
 
 void setup() {
@@ -186,9 +186,14 @@ void loop() {
         dif = cm - target;
         turnTest(pidspeed - 3*dif, pidspeed + 3*dif);
       
-        if(cm_front < target_front){  //<------ JS
-          state = frontTurn;
-        } 
+  //      if(cm_front < target_front){  //<------ JS
+    //      state = frontTurn;
+      //  } 
+
+
+      //if(väggsensorn inte känner av en vägg){
+       //   state = ramp:
+  //    }
 
         LEDcheck();
       
@@ -249,15 +254,30 @@ void loop() {
   }
  // Serial.print("Hallå \n");
     
-    case frontTurn:    //<------- JS
-     //medan servon inte ger värde noll, sväng höger
-      while(!= 0){
+//    case frontTurn:    //<------- JS
+    //medan sensorn inte ger värde noll, sväng höger
+  //    while(!= 0){
     
-      }
-    break;
-  
+    //  }
+  //  break;
+
+
+
+ //   case ramp:
+        //sväng höger - backa - tippa - framåt - sväng vänster - kör framåt
+        //turnRight(viss tid);
+        //backward(); OBS! Bara en viss tid!
+        //tilt();
+        //forward(); OBS! Bara en viss tid!
+        //turnLeft(viss tid);
+        //forward(); Så man väggsensorn känner en vägg igen
+        //state = check;
+        
+  //  break;
 
 }
+
+
 
 //Roboten kör framåt
 //Kan lägga till inparameter för att styra farten, 0-255(full)
@@ -376,6 +396,15 @@ void rise(){
  // delaymillis(500);
 
 //}
+
+
+
+//void tilt(){
+    
+//}
+
+
+
 void delaymillis(unsigned long t){
  unsigned long t0 = millis();
  unsigned long t1 = millis();
@@ -440,5 +469,4 @@ void interrupt(){
   bollfinns = false;
 
 }
-
 
