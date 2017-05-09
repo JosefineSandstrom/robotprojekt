@@ -36,11 +36,14 @@ boolean high = false;
 
 unsigned long tboll;
 
+
+//Pin som styr om servo ska få matning
+int servo_matas = 48;
   
 
 //Gör egen P-regulator, detta är "målet" Den ger med nuvarande inställningar stationärt fel på +4, dvs för närvarande ca 14cm från.
-int target = 10;
-int target_front = 20; //<------- JS
+int target = 20;
+int target_front = 2; //<------- JS
 
 //skillnaden mellan motor A och B i hastighet
 double dif = 0;
@@ -79,6 +82,7 @@ const int lift = 4;
 const int sink = 5;
 const int irtest = 10;
 const int frontTurn = 6;
+const int servoset = 11;
 //const int ramp = 7;
 
 
@@ -135,7 +139,7 @@ void setup() {
   
   
   //Grundstatet är:
-  state = forwards;
+  state = check;
   //Serial.print("start");
   
 
@@ -148,13 +152,30 @@ void loop() {
   
   //Serial.print("ll \n");
   switch (state) {
+
+
+    case servoset:
+      stanna();
+            digitalWrite(servo_matas, HIGH);
+            servo1.attach(6);
+ 
+
+      for (int angle = 0; angle > 180; angle++) {
+          servo1.write(angle);
+          delaymillis(10);
+        }
+      delaymillis(100);
+      digitalWrite(servo_matas, LOW);
+      servo1.detach();
+      state = forwards;
+      break;
   
     case forwards:
       //Kör framåt
       forward();
       delaymillis(1000);
       //Kolla om det finns något
-      state = check;
+      //state = check;
       break;
 
     case check:
@@ -184,18 +205,18 @@ void loop() {
           cm = target +7;
         }
         dif = cm - target;
-        turnTest(pidspeed - 3*dif, pidspeed + 3*dif);
+        turnTest(pidspeed - 2*dif, pidspeed + 2*dif);
       
-  //      if(cm_front < target_front){  //<------ JS
-    //      state = frontTurn;
-      //  } 
+        if((cm_front < target_front) && (cm_front != 0)){  //<------ JS
+          state = frontTurn;
+        } 
 
 
-      //if(väggsensorn inte känner av en vägg){
+     // if(väggsensorn inte känner av en vägg){
        //   state = ramp:
-  //    }
+      //}
 
-        LEDcheck();
+        //LEDcheck();
       
         break;    
 
@@ -229,10 +250,8 @@ void loop() {
       break;
 
     case sink:
-        digitalWrite(33, LOW);
-        digitalWrite(37, LOW);
-        digitalWrite(41, HIGH);
-        unsigned long t1 = millis();
+        
+         t1 = millis();
         
       //  Serial.print("DÅ");
        // Serial.print(t1);
@@ -251,15 +270,24 @@ void loop() {
         delaymillis(200);
         state = check;
      break;
-  }
- // Serial.print("Hallå \n");
-    
-//    case frontTurn:    //<------- JS
+
+
+
+    case frontTurn:    //<------- JS
+    digitalWrite(33, LOW);
+        digitalWrite(37, LOW);
+        digitalWrite(41, HIGH);
     //medan sensorn inte ger värde noll, sväng höger
-  //    while(!= 0){
+     // while(!= 0){
+     
+    turnRightAlt(350);
     
-    //  }
-  //  break;
+    stanna();
+      //}
+
+
+      state = check;
+    break;
 
 
 
@@ -274,6 +302,11 @@ void loop() {
         //state = check;
         
   //  break;
+     
+  }
+ // Serial.print("Hallå \n");
+    
+    
 
 }
 
@@ -469,4 +502,3 @@ void interrupt(){
   bollfinns = false;
 
 }
-
