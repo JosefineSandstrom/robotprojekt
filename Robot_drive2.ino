@@ -19,7 +19,7 @@ boolean bollfinns;
 int full = 255;
 int fullB = 255;
 int fullA = 250;
-int pidspeed = 230;
+int pidspeed = 100;
 
 
 //Variabler i LEDcheck
@@ -36,10 +36,13 @@ boolean high = false;
 
 unsigned long tboll;
 
+
+//Pin som styr om servo ska få matning
+int servo_matas = 48;
   
 
 //Gör egen P-regulator, detta är "målet" Den ger med nuvarande inställningar stationärt fel på +4, dvs för närvarande ca 14cm från.
-int target = 10;
+int target = 20;
 int target_front = 20; //<------- JS
 
 //skillnaden mellan motor A och B i hastighet
@@ -79,12 +82,14 @@ const int lift = 4;
 const int sink = 5;
 const int irtest = 10;
 const int frontTurn = 6;
-//const int ramp = 7;
+const int servoset = 11;
+const int ramp = 7;
+
+//skapar delay i början
+  boolean sann = true;
 
 
 void setup() {
-  servo1.attach(6);
-  servo1.write(180);
   //serial monitor
   Serial.begin(115200);
 
@@ -127,7 +132,10 @@ void setup() {
   pinMode(33, OUTPUT);
   pinMode(37, OUTPUT);
   pinMode(41,OUTPUT);
+  
+  
 
+  
   //Interruptpinen har input_pullup för att dra upp värdet från sensorn
   pinMode(interruptpin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(interruptpin), interrupt, LOW);
@@ -135,7 +143,7 @@ void setup() {
   
   
   //Grundstatet är:
-  state = forwards;
+  state = servoset;
   //Serial.print("start");
   
 
@@ -145,14 +153,36 @@ void setup() {
 }
 //
 void loop() {
-  
+  while(sann){
+    digitalWrite(33, HIGH);
+      digitalWrite(37, HIGH);
+      digitalWrite(41, HIGH);
+    delaymillis(5000);
+    sann = false;
+    digitalWrite(33, LOW);
+      digitalWrite(37, LOW);
+      digitalWrite(41, LOW);
+  }
   //Serial.print("ll \n");
   switch (state) {
+
+
+    case servoset:
+      stanna();
+      digitalWrite(servo_matas, HIGH);
+      servo1.attach(6);
+            
+      servo1.write(90);
+      delaymillis(400);
+      digitalWrite(servo_matas, LOW);
+      servo1.detach();
+      state = forwards;;
+      break;
   
     case forwards:
       //Kör framåt
-      forward();
-      delaymillis(1000);
+       turnTest(pidspeed, pidspeed);
+      delaymillis(250);
       //Kolla om det finns något
       state = check;
       break;
@@ -173,27 +203,38 @@ void loop() {
       delaymillis(50);
       cm = sonar.convert_cm(sonar.ping());
       Serial.print(cm);
-      Serial.print("\n cm");
-     
+      Serial.print(" cm          ");
+      delaymillis(50);
       cm_front = sonar_front.convert_cm(sonar_front.ping());  //<------ JS
-      
+      Serial.print(cm_front);
+      Serial.print("rumpa \n");
       //skriv ut i cm
       //Serial.print("\n Output: ");
       //Serial.print(Output);
+      if(cm != 0){
         if(cm > target + 7){
           cm = target +7;
         }
         dif = cm - target;
-        turnTest(pidspeed - 3*dif, pidspeed + 3*dif);
+        turnTest(pidspeed - dif, pidspeed + dif);
+      }
       
-  //      if(cm_front < target_front){  //<------ JS
-    //      state = frontTurn;
-      //  } 
+        if((cm_front < target_front) && (cm_front != 0)){  //<------ JS
+          state = frontTurn;
+        } 
 
 
-      //if(väggsensorn inte känner av en vägg){
-       //   state = ramp:
-  //    }
+      if(cm > 100){
+        stanna();
+        delaymillis(50);
+      if( sonar.convert_cm(sonar.ping()) > 100){
+        delaymillis(199);
+        if(sonar.convert_cm(sonar.ping()) > 100){
+                  state = ramp;
+        }
+      }
+          
+      }
 
         LEDcheck();
       
@@ -201,7 +242,7 @@ void loop() {
 
     case backwards:
       //Kör bakåt
-      backward();
+      backward(500);
       //Vänta 500ms
       delaymillis(1000);
       //Kör framåt
@@ -213,67 +254,86 @@ void loop() {
      break;
 
      case lift:
+     servo1.attach(6);
      digitalWrite(33, LOW);
       digitalWrite(37, HIGH);
       digitalWrite(41, LOW);
      stanna();
+     digitalWrite(servo_matas, HIGH);
      // Serial.print("tjena");
     
       millisstart = millis();
-      for(int angle = 180; angle > 0; angle--){
+      for(int angle = 90; angle < 180; angle+=5 ){
         servo1.write(angle);
-      delaymillis(15);
+      delaymillis(30);
       }
+      digitalWrite(servo_matas, LOW);
       delaymillis(2000);
       state = sink;
       break;
 
     case sink:
-        digitalWrite(33, LOW);
-        digitalWrite(37, LOW);
-        digitalWrite(41, HIGH);
-        unsigned long t1 = millis();
+      digitalWrite(33, LOW);
+      digitalWrite(37, LOW);
+      digitalWrite(41, HIGH);
+         t1 = millis();
+         digitalWrite(servo_matas, HIGH);
         
-      //  Serial.print("DÅ");
-       // Serial.print(t1);
-        if(t1-millisstart > 1000){
-          for(int angle = 0; angle < 180; angle++){
-             servo1.write(angle);
-             delaymillis(10);
-          }
-       //   Serial.print("kjhkj \n \n");
-          delaymillis(1000);
-          //servo1.write(90);
-          //state = forwards;
-          millisstart = millis();
-        }
-     //   Serial.print("HEJ");
-        delaymillis(200);
-        state = check;
+        //if(t1-millisstart > 1000){
+          //for(int angle = 50; angle < 140; angle++){
+             servo1.write(90);
+             
+          //}
+         // delaymillis(1000);
+         // millisstart = millis();
+        //}
+       // servo1.write(160);
+        delaymillis(500);
+        state = forwards;
+        digitalWrite(servo_matas, LOW);
+        servo1.detach();
      break;
+
+
+
+    case frontTurn:    //<------- JS
+    digitalWrite(33, LOW);
+        digitalWrite(37, HIGH);
+        digitalWrite(41, HIGH);
+    //medan sensorn inte ger värde noll, sväng höger
+     // while(!= 0){
+     
+    turnRightAlt(350);
+    
+    stanna();
+      //}
+
+
+      state = forwards;
+    break;
+
+
+
+    case ramp:
+
+         turnLeft(400);
+         turnRightAlt(350);
+         
+        //sväng höger - backa - tippa - framåt - sväng vänster - kör framåt
+       
+        backward(5000);// OBS! Bara en viss tid!
+        //tilt(); //Tippar flaket
+        forward(5000); //OBS! Bara en viss tid!
+        turnLeft(800);
+        forward(500); //Så man väggsensorn känner en vägg igen
+        state = check;
+        
+    break;
+     
   }
  // Serial.print("Hallå \n");
     
-//    case frontTurn:    //<------- JS
-    //medan sensorn inte ger värde noll, sväng höger
-  //    while(!= 0){
     
-    //  }
-  //  break;
-
-
-
- //   case ramp:
-        //sväng höger - backa - tippa - framåt - sväng vänster - kör framåt
-        //turnRight(viss tid);
-        //backward(); OBS! Bara en viss tid!
-        //tilt();
-        //forward(); OBS! Bara en viss tid!
-        //turnLeft(viss tid);
-        //forward(); Så man väggsensorn känner en vägg igen
-        //state = check;
-        
-  //  break;
 
 }
 
@@ -281,7 +341,7 @@ void loop() {
 
 //Roboten kör framåt
 //Kan lägga till inparameter för att styra farten, 0-255(full)
-void forward() {
+void forward(int t) {
   //Bromsar för A & B av
   digitalWrite(brkA, LOW);
   digitalWrite(brkB, LOW);
@@ -291,6 +351,7 @@ void forward() {
   //Full fart för A & B
   analogWrite(3, fullA);
   analogWrite(11, fullB);
+  delaymillis(t);
   return;
 }
 
@@ -372,7 +433,7 @@ void turnRightAlt(int t) {
 }
 
 //Roboten kör bakåt
-void backward() {
+void backward(int t) {
   //Broms av för båda
   digitalWrite(brkA, LOW);
   digitalWrite(brkB, LOW);
@@ -382,6 +443,7 @@ void backward() {
   //Full fart för båda
   analogWrite(3, full);
   analogWrite(11, full);
+  delaymillis(t);
 }
 
 void rise(){
