@@ -43,7 +43,8 @@ int servo_matas = 48;
 
 //Gör egen P-regulator, detta är "målet" Den ger med nuvarande inställningar stationärt fel på +4, dvs för närvarande ca 14cm från.
 int target = 16;
-int target_front = 20; //<------- JS
+int target_front = 20; // <------- JS
+int targetback = 12;
 
 //skillnaden mellan motor A och B i hastighet
 double dif = 0;
@@ -84,6 +85,7 @@ const int irtest = 10;
 const int frontTurn = 6;
 const int servoset = 11;
 const int ramp = 7;
+const int start = 8;
 
 //skapar delay i början
   boolean sann = true;
@@ -166,6 +168,13 @@ void loop() {
   //Serial.print("ll \n");
   switch (state) {
 
+    case start:
+      forward(4000);
+      turnLeftAlt(350);
+      forward(2000);
+      state = check;
+      break;
+
 
     case servoset:
       stanna();
@@ -181,7 +190,7 @@ void loop() {
       servo1.write(30);
       delaymillis(1000);
       servo1.detach();
-      state = check;
+      state = start;
       break;
   
     case forwards:
@@ -228,8 +237,11 @@ void loop() {
       }
       
         if((cm_front < target_front) && (cm_front != 0)){  //<------ JS
+          cm_front = sonar_front.convert_cm(sonar_front.ping());  //<------ JS
+          if((cm_front < target_front) && (cm_front != 0)){
           state = frontTurn;
-        } 
+         } 
+        }
 
 
       if((cm_front < 100) && (cm_front > 60)){
@@ -241,7 +253,7 @@ void loop() {
         state = ramp;
           } else{
             turnTest(pidspeed - dif, pidspeed + dif);
-            delaymillis(200);
+            delaymillis(500);
           }
         }
         
@@ -330,22 +342,31 @@ void loop() {
         digitalWrite(33, HIGH);
         digitalWrite(37, HIGH);
         digitalWrite(41, HIGH);
+         forward(2000);
          turnLeftAlt(350);
          stanna();
          delaymillis(100);
        // forward(5000); //OBS! Bara en viss tid!
        // turnLeft(800);
-        forward(4500);
+        forward(4400);
         stanna();
         turnRightAlt(350);
         stanna();
         delaymillis(1000);
-        backward(1000);
-        backwardslow(7000);
+        backward(2000);
+        if(cm > targetback + 3){
+          cm = targetback + 3;
+        }
+        dif = cm - targetback;
+        turnTestBack(175 - dif, 175 + dif);
         stanna();
         tilt(); //Tippar flaket
         stanna();
-        backwardslow(1500);
+        backwardslow(2000);
+        forward(6000);
+        tiltup();
+        turnLeftAlt(350);
+        forward(4000);
         state = forwards;
         
     break;
@@ -369,7 +390,7 @@ void forward(int t) {
   digitalWrite(dirA, LOW);
   digitalWrite(dirB, LOW);
   //Full fart för A & B
-  analogWrite(3, pidspeed -10);
+  analogWrite(3, pidspeed);
   analogWrite(11, pidspeed);
   delaymillis(t);
   return;
@@ -425,6 +446,18 @@ void turnTest(int speedA, int speedB) {
   analogWrite(11, speedB);
 }
 
+void turnTestBack(int speedA, int speedB) {
+  //Bromsar för A & B av
+  digitalWrite(brkA, LOW);
+  digitalWrite(brkB, LOW);
+  //Riktning för A&B är framåt
+  digitalWrite(dirA, HIGH);
+  digitalWrite(dirB, HIGH);
+  //Full fart för A & B
+  analogWrite(3, speedA);
+  analogWrite(11, speedB);
+  delaymillis(2500);
+}
 void turnLeftAlt(int t) {
   //broms av för A&B
   digitalWrite(brkA, LOW);
@@ -461,8 +494,8 @@ void backward(int t) {
   digitalWrite(dirA, HIGH);
   digitalWrite(dirB, HIGH);
   //Full fart för båda
-  analogWrite(3, 230 - 10);
-  analogWrite(11, 230);
+  analogWrite(3, 230); //-10
+  analogWrite(11, 230 - 15);
   delaymillis(t);
 }
 
@@ -475,8 +508,8 @@ void backwardslow(int t) {
   digitalWrite(dirA, HIGH);
   digitalWrite(dirB, HIGH);
   //Full fart för båda
-  analogWrite(3, pidspeed - 10);
-  analogWrite(11, pidspeed);
+  analogWrite(3, pidspeed + 40);
+  analogWrite(11, pidspeed + 50);
   delaymillis(t);
 }
 
@@ -571,6 +604,11 @@ void tilt(){
   servo1.attach(5);
   servo1.write(100);
   delaymillis(2000);
+  servo1.detach();
+}
+
+void tiltup(){
+  servo1.attach(5);
   servo1.write(30);
   delaymillis(2000);
   servo1.detach();
