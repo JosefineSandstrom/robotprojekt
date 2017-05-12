@@ -42,7 +42,7 @@ int servo_matas = 48;
   
 
 //Gör egen P-regulator, detta är "målet" Den ger med nuvarande inställningar stationärt fel på +4, dvs för närvarande ca 14cm från.
-int target = 20;
+int target = 16;
 int target_front = 20; //<------- JS
 
 //skillnaden mellan motor A och B i hastighet
@@ -176,13 +176,21 @@ void loop() {
       delaymillis(400);
       digitalWrite(servo_matas, LOW);
       servo1.detach();
-      state = forwards;;
+
+      servo1.attach(5);
+      servo1.write(30);
+      delaymillis(1000);
+      servo1.detach();
+      state = check;
       break;
   
     case forwards:
+    digitalWrite(33, LOW);
+      digitalWrite(37, LOW);
+      digitalWrite(41, LOW);
       //Kör framåt
        turnTest(pidspeed, pidspeed);
-      delaymillis(250);
+      delaymillis(3000);
       //Kolla om det finns något
       state = check;
       break;
@@ -207,7 +215,7 @@ void loop() {
       delaymillis(50);
       cm_front = sonar_front.convert_cm(sonar_front.ping());  //<------ JS
       Serial.print(cm_front);
-      Serial.print("rumpa \n");
+      Serial.print(" rumpa \n");
       //skriv ut i cm
       //Serial.print("\n Output: ");
       //Serial.print(Output);
@@ -224,17 +232,20 @@ void loop() {
         } 
 
 
-      if(cm > 100){
+      if((cm_front < 100) && (cm_front > 60)){
+        
         stanna();
-        delaymillis(50);
-      if( sonar.convert_cm(sonar.ping()) > 100){
-        delaymillis(199);
-        if(sonar.convert_cm(sonar.ping()) > 100){
-                  state = ramp;
+        delaymillis(500);
+        cm = sonar.convert_cm(sonar.ping());
+        if((cm > 40) || (cm ==0)){
+        state = ramp;
+          } else{
+            turnTest(pidspeed - dif, pidspeed + dif);
+            delaymillis(200);
+          }
         }
-      }
-          
-      }
+        
+
 
         LEDcheck();
       
@@ -289,9 +300,11 @@ void loop() {
         //}
        // servo1.write(160);
         delaymillis(500);
-        state = forwards;
+        state = check;
         digitalWrite(servo_matas, LOW);
         servo1.detach();
+        forward(50);
+        delaymillis(2000);
      break;
 
 
@@ -300,33 +313,40 @@ void loop() {
     digitalWrite(33, LOW);
         digitalWrite(37, HIGH);
         digitalWrite(41, HIGH);
-    //medan sensorn inte ger värde noll, sväng höger
-     // while(!= 0){
+    
      
     turnRightAlt(350);
     
     stanna();
-      //}
+      
 
-
-      state = forwards;
+      forward(50);
+      state = check;
     break;
 
 
 
     case ramp:
-
-         turnLeft(400);
-         turnRightAlt(350);
-         
-        //sväng höger - backa - tippa - framåt - sväng vänster - kör framåt
-       
-        backward(5000);// OBS! Bara en viss tid!
-        //tilt(); //Tippar flaket
-        forward(5000); //OBS! Bara en viss tid!
-        turnLeft(800);
-        forward(500); //Så man väggsensorn känner en vägg igen
-        state = check;
+        digitalWrite(33, HIGH);
+        digitalWrite(37, HIGH);
+        digitalWrite(41, HIGH);
+         turnLeftAlt(350);
+         stanna();
+         delaymillis(100);
+       // forward(5000); //OBS! Bara en viss tid!
+       // turnLeft(800);
+        forward(4500);
+        stanna();
+        turnRightAlt(350);
+        stanna();
+        delaymillis(1000);
+        backward(1000);
+        backwardslow(7000);
+        stanna();
+        tilt(); //Tippar flaket
+        stanna();
+        backwardslow(1500);
+        state = forwards;
         
     break;
      
@@ -349,8 +369,8 @@ void forward(int t) {
   digitalWrite(dirA, LOW);
   digitalWrite(dirB, LOW);
   //Full fart för A & B
-  analogWrite(3, fullA);
-  analogWrite(11, fullB);
+  analogWrite(3, pidspeed -10);
+  analogWrite(11, pidspeed);
   delaymillis(t);
   return;
 }
@@ -441,10 +461,25 @@ void backward(int t) {
   digitalWrite(dirA, HIGH);
   digitalWrite(dirB, HIGH);
   //Full fart för båda
-  analogWrite(3, full);
-  analogWrite(11, full);
+  analogWrite(3, 230 - 10);
+  analogWrite(11, 230);
   delaymillis(t);
 }
+
+
+void backwardslow(int t) {
+  //Broms av för båda
+  digitalWrite(brkA, LOW);
+  digitalWrite(brkB, LOW);
+  //Riktning bakåt för A&B
+  digitalWrite(dirA, HIGH);
+  digitalWrite(dirB, HIGH);
+  //Full fart för båda
+  analogWrite(3, pidspeed - 10);
+  analogWrite(11, pidspeed);
+  delaymillis(t);
+}
+
 
 void rise(){
   servo1.write(140);
@@ -531,4 +566,14 @@ void interrupt(){
   bollfinns = false;
 
 }
+
+void tilt(){
+  servo1.attach(5);
+  servo1.write(100);
+  delaymillis(2000);
+  servo1.write(30);
+  delaymillis(2000);
+  servo1.detach();
+}
+
 
