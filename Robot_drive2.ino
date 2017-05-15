@@ -169,7 +169,7 @@ void loop() {
   switch (state) {
 
     case start:
-      forward(4000);
+      forward(4500);
       turnLeftAlt(350);
       forward(2000);
       state = check;
